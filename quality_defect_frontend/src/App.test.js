@@ -11,5 +11,7 @@ test("renders login screen when unauthenticated", () => {
       </AuthProvider>
     </MemoryRouter>
   );
-  expect(screen.getByText(/sign in/i)).toBeInTheDocument();
+
+  // Unambiguous: the page title ("Sign in") is a heading, while the submit control is a button.
+  expect(screen.getByRole("heading", { name: /sign in/i })).toBeInTheDocument();
 });

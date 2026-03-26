@@ -1,0 +1,1 @@
+Fixed App.test.js ambiguous query by using getByRole('heading', { name: /sign in/i }).
