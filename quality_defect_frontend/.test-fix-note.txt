@@ -1,1 +1,13 @@
-Fixed App.test.js ambiguous query by using getByRole('heading', { name: /sign in/i }).
+npm audit fix was applied with non-breaking updates.
+
+Note:
+- Remaining vulnerabilities largely originate from the react-scripts@5 (CRA) toolchain dependency tree.
+- Addressing them would require a breaking change/migration (e.g., replacing CRA/react-scripts), or npm audit fix --force (not safe).
+
+Test failure encountered:
+- After running `npm audit fix --omit=dev`, devDependencies were not installed in node_modules and `npm test` failed with:
+  "Cannot find module '@testing-library/jest-dom' from 'src/setupTests.js'"
+
+Resolution:
+- Reinstall dependencies including dev deps: `npm install --include=dev`
+- Then tests pass: `npm test -- --watchAll=false`
