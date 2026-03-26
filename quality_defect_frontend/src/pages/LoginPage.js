@@ -34,7 +34,7 @@ export function LoginPage() {
       <div className="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4">
         <Card className="w-full max-w-md p-6">
           <div className="mb-6">
-            <div className="text-lg font-bold text-gray-900">Sign in</div>
+            <h1 className="text-lg font-bold text-gray-900">Sign in</h1>
             <div className="text-sm text-gray-600">
               Use your credentials to access the defect management system.
             </div>

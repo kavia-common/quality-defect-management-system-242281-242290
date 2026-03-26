@@ -13,5 +13,5 @@ test("renders login screen when unauthenticated", () => {
   );
 
   // Unambiguous: the page title ("Sign in") is a heading, while the submit control is a button.
-  expect(screen.getByRole("heading", { name: /sign in/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 1, name: /sign in/i })).toBeInTheDocument();
 });
