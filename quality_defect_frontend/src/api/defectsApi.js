@@ -99,3 +99,16 @@ export async function uploadDefectImage(defectId, file) {
     throw apiErr;
   }
 }
+
+// PUBLIC_INTERFACE
+export async function downloadDefectPdf(defectId) {
+  /** Downloads the server-generated PDF for a defect. Returns a Blob. */
+  try {
+    const res = await http.get(`/reports/defects/${encodeURIComponent(defectId)}.pdf`, {
+      responseType: "blob"
+    });
+    return res.data;
+  } catch (err) {
+    throw toApiError(err);
+  }
+}

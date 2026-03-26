@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getDefect, uploadDefectImage } from "../api/defectsApi";
+import { downloadDefectPdf, getDefect, uploadDefectImage } from "../api/defectsApi";
 import { Badge, Button, Card } from "../ui/components";
 
 const toneForSeverity = (sev) => {
@@ -53,10 +53,24 @@ export function DefectDetailPage() {
     }
   };
 
-  const exportPdf = () => {
-    // UI scaffolding: the backend can provide PDF generation endpoint later.
-    // For now, we print the page, which is a viable minimal PDF export workflow.
-    window.print();
+  const exportPdf = async () => {
+    // Prefer server-generated PDF (consistent formatting for audits).
+    // Fallback to browser print-to-PDF if backend endpoint is unavailable.
+    setError("");
+    try {
+      const blob = await downloadDefectPdf(defectId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${defectId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      // If backend isn't reachable in some environments, keep a functional export path.
+      window.print();
+    }
   };
 
   if (error) {

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -39,14 +39,41 @@ def create_app() -> FastAPI:
     )
 
     # CORS to allow React frontend to call API directly.
-    allow_origins = settings.cors_allow_origins or ["*"]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=allow_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    #
+    # IMPORTANT:
+    # Browsers disallow `Access-Control-Allow-Origin: *` when `Access-Control-Allow-Credentials: true`.
+    # Many frontends (including axios defaults) may send credentialed requests or rely on auth headers,
+    # so we avoid the invalid combination.
+    #
+    # Strategy:
+    # - If REACT_APP_FRONTEND_URL is set, use it as the explicit allowlist.
+    # - Otherwise, reflect the Origin header (per request) for maximum dev/demo compatibility.
+    if settings.cors_allow_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=settings.cors_allow_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    else:
+
+        @app.middleware("http")
+        async def reflect_cors_origin(request: Request, call_next):
+            """Reflect Origin for dev/demo CORS compatibility when no allowlist is configured."""
+            origin = request.headers.get("origin")
+            response = await call_next(request)
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Vary"] = "Origin"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Headers"] = request.headers.get(
+                    "access-control-request-headers", "*"
+                )
+                response.headers["Access-Control-Allow-Methods"] = request.headers.get(
+                    "access-control-request-method", "*"
+                )
+            return response
 
     # Serve uploaded images
     uploads_dir = Path(settings.uploads_dir)

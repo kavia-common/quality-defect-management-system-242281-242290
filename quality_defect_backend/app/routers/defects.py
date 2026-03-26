@@ -6,6 +6,7 @@ from typing import List
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 
+from app.core.settings import get_settings
 from app.core.store import CorrectiveAction, Defect, ImageRef, STORE
 from app.core.ws_manager import WS_MANAGER
 from app.deps.auth import get_current_user, require_roles
@@ -29,6 +30,24 @@ def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _uploads_public_base() -> str:
+    settings = get_settings()
+    # Prefer api_base if set, otherwise backend_url; both are expected to be public-facing.
+    base = (settings.api_base or settings.backend_url or "").rstrip("/")
+    return base
+
+
+def _as_public_upload_url(path: str) -> str:
+    """Convert '/uploads/...' (or 'uploads/...') paths into an absolute URL when configured."""
+    if not path:
+        return path
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    normalized = path if path.startswith("/") else f"/{path}"
+    base = _uploads_public_base()
+    return f"{base}{normalized}" if base else normalized
+
+
 def _defect_to_out(d: Defect) -> DefectOut:
     return DefectOut(
         id=d.id,
@@ -39,7 +58,9 @@ def _defect_to_out(d: Defect) -> DefectOut:
         description=d.description,
         createdAt=d.created_at,
         updatedAt=d.updated_at,
-        images=[ImageOut(url=i.url, name=i.name, uploadedAt=i.uploaded_at) for i in d.images],
+        images=[
+            ImageOut(url=_as_public_upload_url(i.url), name=i.name, uploadedAt=i.uploaded_at) for i in d.images
+        ],
         rca=RcaData(fiveWhys=d.rca.five_whys, fishbone=d.rca.fishbone, notes=d.rca.notes),
     )
 
